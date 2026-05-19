@@ -14,7 +14,331 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      consulta: {
+        Row: {
+          created_at: string
+          data_consulta: string
+          hora_consulta: string
+          id: string
+          id_medico: string
+          id_paciente: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_consulta: string
+          hora_consulta: string
+          id?: string
+          id_medico: string
+          id_paciente: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_consulta?: string
+          hora_consulta?: string
+          id?: string
+          id_medico?: string
+          id_paciente?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consulta_id_medico_fkey"
+            columns: ["id_medico"]
+            isOneToOne: false
+            referencedRelation: "medico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consulta_id_paciente_fkey"
+            columns: ["id_paciente"]
+            isOneToOne: false
+            referencedRelation: "paciente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      especialidade: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome_especialidade: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_especialidade: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_especialidade?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medicamento: {
+        Row: {
+          created_at: string
+          dosagem_padrao: string | null
+          fabricante: string | null
+          id: string
+          nome_comercial: string | null
+          nome_generico: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dosagem_padrao?: string | null
+          fabricante?: string | null
+          id?: string
+          nome_comercial?: string | null
+          nome_generico: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dosagem_padrao?: string | null
+          fabricante?: string | null
+          id?: string
+          nome_comercial?: string | null
+          nome_generico?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medico: {
+        Row: {
+          created_at: string
+          crm: string
+          email: string | null
+          id: string
+          id_especialidade: string | null
+          nome: string
+          telefone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crm: string
+          email?: string | null
+          id?: string
+          id_especialidade?: string | null
+          nome: string
+          telefone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crm?: string
+          email?: string | null
+          id?: string
+          id_especialidade?: string | null
+          nome?: string
+          telefone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medico_id_especialidade_fkey"
+            columns: ["id_especialidade"]
+            isOneToOne: false
+            referencedRelation: "especialidade"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paciente: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          data_nascimento: string
+          endereco: string | null
+          id: string
+          id_plano: string | null
+          nome: string
+          sexo: Database["public"]["Enums"]["sexo_enum"] | null
+          telefone: string | null
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          data_nascimento: string
+          endereco?: string | null
+          id?: string
+          id_plano?: string | null
+          nome: string
+          sexo?: Database["public"]["Enums"]["sexo_enum"] | null
+          telefone?: string | null
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string
+          endereco?: string | null
+          id?: string
+          id_plano?: string | null
+          nome?: string
+          sexo?: Database["public"]["Enums"]["sexo_enum"] | null
+          telefone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paciente_id_plano_fkey"
+            columns: ["id_plano"]
+            isOneToOne: false
+            referencedRelation: "plano_saude"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_saude: {
+        Row: {
+          created_at: string
+          id: string
+          nome_plano: string
+          operadora: string | null
+          telefone_contato: string | null
+          tipo_plano: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_plano: string
+          operadora?: string | null
+          telefone_contato?: string | null
+          tipo_plano?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_plano?: string
+          operadora?: string | null
+          telefone_contato?: string | null
+          tipo_plano?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prescricao: {
+        Row: {
+          created_at: string
+          id: string
+          id_medicamento: string
+          id_prontuario: string
+          instrucoes_uso: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          id_medicamento: string
+          id_prontuario: string
+          instrucoes_uso?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          id_medicamento?: string
+          id_prontuario?: string
+          instrucoes_uso?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescricao_id_medicamento_fkey"
+            columns: ["id_medicamento"]
+            isOneToOne: false
+            referencedRelation: "medicamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescricao_id_prontuario_fkey"
+            columns: ["id_prontuario"]
+            isOneToOne: false
+            referencedRelation: "prontuario"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+        }
+        Relationships: []
+      }
+      prontuario: {
+        Row: {
+          anamnese: string | null
+          data_registro: string
+          diagnostico: string | null
+          id: string
+          id_consulta: string
+          id_paciente: string
+          user_id: string
+        }
+        Insert: {
+          anamnese?: string | null
+          data_registro?: string
+          diagnostico?: string | null
+          id?: string
+          id_consulta: string
+          id_paciente: string
+          user_id: string
+        }
+        Update: {
+          anamnese?: string | null
+          data_registro?: string
+          diagnostico?: string | null
+          id?: string
+          id_consulta?: string
+          id_paciente?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prontuario_id_consulta_fkey"
+            columns: ["id_consulta"]
+            isOneToOne: true
+            referencedRelation: "consulta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuario_id_paciente_fkey"
+            columns: ["id_paciente"]
+            isOneToOne: false
+            referencedRelation: "paciente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +347,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      sexo_enum: "M" | "F"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +474,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      sexo_enum: ["M", "F"],
+    },
   },
 } as const
