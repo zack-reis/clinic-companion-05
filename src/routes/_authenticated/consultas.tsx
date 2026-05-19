@@ -116,7 +116,7 @@ function ConsultasPage() {
         </table>
       </div>
 
-      {open && <ConsultaModal pacientes={pacientes} medicos={medicos} onClose={() => setOpen(false)} onSubmit={(d) => create.mutate(d)} busy={create.isPending} />}
+      {open && <ConsultaModal pacientes={pacientes} medicos={medicos} onClose={() => setOpen(false)} onSubmit={(d: any) => create.mutate(d)} busy={create.isPending} />}
     </div>
   );
 }

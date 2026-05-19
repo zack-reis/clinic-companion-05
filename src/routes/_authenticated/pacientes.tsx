@@ -102,7 +102,7 @@ function PacientesPage() {
         </table>
       </div>
 
-      {open && <PacienteModal planos={planos} onClose={() => setOpen(false)} onSubmit={(d) => create.mutate(d)} busy={create.isPending} />}
+      {open && <PacienteModal planos={planos} onClose={() => setOpen(false)} onSubmit={(d: any) => create.mutate(d)} busy={create.isPending} />}
     </div>
   );
 }
