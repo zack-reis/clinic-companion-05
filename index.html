@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Companion - Painel de Controle</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons (Script para carregar ícones dinamicamente se necessário, ou classes Tailwind padrão) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- React e Babel CDNs para rodar JSX direto no navegador -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom scrollbar para deixar o visual mais limpo */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <!-- Script React com JSX compilado pelo Babel no navegador -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock Data Inicial
+        const initialAppointments = [
+            { id: 1, patient: "Carlos Eduardo Santos", time: "09:00", type: "Consulta Geral", status: "Confirmado", phone: "(11) 98765-4321" },
+            { id: 2, patient: "Ana Beatriz Oliveira", time: "10:30", type: "Retorno", status: "Pendente", phone: "(11) 97654-3210" },
+            { id: 3, patient: "Mariana Costa Silva", time: "13:15", type: "Exame Clínico", status: "Confirmado", phone: "(11) 96543-2109" },
+            { id: 4, patient: "Roberto Almeida Souza", time: "15:00", type: "Avaliação", status: "Cancelado", phone: "(11) 95432-1098" },
+            { id: 5, patient: "Juliana Mendes Rocha", time: "16:30", type: "Consulta Geral", status: "Confirmado", phone: "(11) 94321-0987" }
+        ];
+
+        const initialPatients = [
+            { id: "P101", name: "Carlos Eduardo Santos", age: 34, gender: "Masculino", lastVisit: "12/05/2026", email: "carlos.edu@email.com" },
+            { id: "P102", name: "Ana Beatriz Oliveira", age: 28, gender: "Feminino", lastVisit: "19/05/2026", email: "ana.beatriz@email.com" },
+            { id: "P103", name: "Mariana Costa Silva", age: 42, gender: "Feminino", lastVisit: "18/05/2026", email: "mariana.costa@email.com" },
+            { id: "P104", name: "Roberto Almeida Souza", age: 55, gender: "Masculino", lastVisit: "10/04/2026", email: "roberto.almeida@email.com" },
+            { id: "P105", name: "Juliana Mendes Rocha", age: 23, gender: "Feminino", lastVisit: "19/05/2026", email: "juliana.mendes@email.com" }
+        ];
+
+        function ClinicCompanion() {
+            const [currentTab, setCurrentTab] = useState('dashboard');
+            const [appointments, setAppointments] = useState(initialAppointments);
+            const [patients, setPatients] = useState(initialPatients);
+            const [searchQuery, setSearchQuery] = useState('');
+            
+            // Estados para novos cadastros de consulta
+            const [newPatientName, setNewPatientName] = useState('');
+            const [newTime, setNewTime] = useState('');
+            const [newType, setNewType] = useState('Consulta Geral');
+            const [showModal, setShowModal] = useState(false);
+
+            // Filtros de busca simples
+            const filteredAppointments = appointments.filter(app => 
+                app.patient.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            const filteredPatients = patients.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            const handleAddAppointment = (e) => {
+                e.preventDefault();
+                if (!newPatientName || !newTime) return;
+
+                const newApp = {
+                    id: appointments.length + 1,
+                    patient: newPatientName,
+                    time: newTime,
+                    type: newType,
+                    status: 'Pendente',
+                    phone: '(11) 99999-9999'
+                };
+
+                setAppointments([...appointments, newApp].sort((a, b) => a.time.localeCompare(b.time)));
+                
+                // Se o paciente não existir na lista, adiciona automaticamente um mock
+                if (!patients.some(p => p.name.toLowerCase() === newPatientName.toLowerCase())) {
+                    const newPat = {
+                        id: `P${100 + patients.length + 1}`,
+                        name: newPatientName,
+                        age: Math.floor(Math.random() * (60 - 20 + 1)) + 20,
+                        gender: Math.random() > 0.5 ? 'Masculino' : 'Feminino',
+                        lastVisit: 'Hoje',
+                        email: `${newPatientName.toLowerCase().replace(/\s+/g, '.')}@email.com`
+                    };
+                    setPatients([...patients, newPat]);
+                }
+
+                // Reset e Fechar
+                setNewPatientName('');
+                setNewTime('');
+                setShowModal(false);
+            };
+
+            const toggleStatus = (id) => {
+                setAppointments(appointments.map(app => {
+                    if (app.id === id) {
+                        const statusOrder = ['Pendente', 'Confirmado', 'Cancelado'];
+                        const nextIndex = (statusOrder.indexOf(app.status) + 1) % statusOrder.length;
+                        return { ...app, status: statusOrder[nextIndex] };
+                    }
+                    return app;
+                }));
+            };
+
+            return (
+                <div className="flex h-screen overflow-hidden bg-slate-50">
+                    
+                    {/* SIDEBAR */}
+                    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex border-r border-slate-800">
+                        <div>
+                            {/* Logo */}
+                            <div className="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800 gap-3">
+                                <div className="p-2 bg-emerald-500 rounded-lg text-slate-950 flex items-center justify-center font-bold text-lg">
+                                    <i className="fa-solid fa-heart-pulse"></i>
+                                </div>
+                                <span className="font-bold text-white text-lg tracking-wide">ClinicCompanion</span>
+                            </div>
+
+                            {/* Navigation */}
+                            <nav className="mt-6 px-4 space-y-1">
+                                <button 
+                                    onClick={() => setCurrentTab('dashboard')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentTab === 'dashboard' ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}
+                                >
+                                    <i className="fa-solid fa-chart-pie w-5"></i>
+                                    Painel Geral
+                                </button>
+                                <button 
+                                    onClick={() => setCurrentTab('appointments')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentTab === 'appointments' ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}
+                                >
+                                    <i className="fa-solid fa-calendar-days w-5"></i>
+                                    Agendamentos
+                                    <span className="ml-auto bg-emerald-500/20 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-bold">
+                                        {appointments.filter(a => a.status === 'Confirmado').length}
+                                    </span>
+                                </button>
+                                <button 
+                                    onClick={() => setCurrentTab('patients')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentTab === 'patients' ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}
+                                >
+                                    <i className="fa-solid fa-user-group w-5"></i>
+                                    Pacientes
+                                </button>
+                                <button 
+                                    onClick={() => setCurrentTab('history')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentTab === 'history' ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}
+                                >
+                                    <i className="fa-solid fa-file-medical w-5"></i>
+                                    Prontuários
+                                </button>
+                            </nav>
+                        </div>
+
+                        {/* User Profile Footer */}
+                        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold uppercase">
+                                DR
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">Dr. Ricardo Augusto</p>
+                                <p className="text-xs text-slate-400 truncate">CRM/SP 123456</p>
+                            </div>
+                            <button className="text-slate-500 hover:text-slate-300 transition-colors">
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT CONTAINER */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        
+                        {/* TOP HEADER */}
+                        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shadow-xs">
+                            {/* Search bar */}
+                            <div className="relative w-64 md:w-96">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                    <i className="fa-solid fa-magnifying-glass text-sm"></i>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    placeholder="Buscar paciente ou prontuário..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                />
+                            </div>
+
+                            {/* Actions/Notifications */}
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setShowModal(true)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                    <i className="fa-solid fa-plus text-xs"></i>
+                                    Novo Agendamento
+                                </button>
+                                <div className="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+                                <button className="relative p-2 text-slate-500 hover:text-slate-700 transition-colors rounded-full hover:bg-slate-100">
+                                    <i className="fa-regular fa-bell text-lg"></i>
+                                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* MAIN SCROLLABLE BODY */}
+                        <main className="flex-1 overflow-y-auto p-6">
+                            
+                            {/* TAB: DASHBOARD */}
+                            {currentTab === 'dashboard' && (
+                                <div className="space-y-6">
+                                    {/* Page Header */}
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-slate-900">Bem-vindo de volta, Dr. Ricardo</h1>
+                                        <p className="text-sm text-slate-500">Aqui está o resumo da sua clínica para o dia de hoje.</p>
+                                    </div>
+
+                                    {/* Metrics Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Consultas Hoje</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-1">{appointments.length}</h3>
+                                                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-2">
+                                                    <i className="fa-solid fa-arrow-trend-up"></i> +12% vs ontem
+                                                </span>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                                                <i className="fa-solid fa-user-doctor"></i>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Confirmadas</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                                                    {appointments.filter(a => a.status === 'Confirmado').length}
+                                                </h3>
+                                                <span className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-2">
+                                                    Taxa de presença alta
+                                                </span>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                                                <i className="fa-solid fa-calendar-check"></i>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Novos Pacientes</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-1">{patients.length}</h3>
+                                                <span className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-2">
+                                                    <i className="fa-solid fa-arrow-trend-up"></i> +4 esta semana
+                                                </span>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                                                <i className="fa-solid fa-user-plus"></i>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-medium">Atendimentos Pendentes</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                                                    {appointments.filter(a => a.status === 'Pendente').length}
+                                                </h3>
+                                                <span className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-2">
+                                                    Aguardando confirmação
+                                                </span>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                                                <i className="fa-regular fa-clock"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Dashboard Split Sections */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        
+                                        {/* Agenda Resumida */}
+                                        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h2 className="text-lg font-bold text-slate-900">Agenda do Dia</h2>
+                                                <button onClick={() => setCurrentTab('appointments')} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">Ver completa →</button>
+                                            </div>
+                                            
+                                            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto pr-1">
+                                                {filteredAppointments.length === 0 ? (
+                                                    <p className="text-sm text-slate-400 text-center py-6">Nenhuma consulta correspondente encontrada.</p>
+                                                ) : filteredAppointments.map((app) => (
+                                                    <div key={app.id} className="flex items-center justify-between py-3 group">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded w-14 text-center">
+                                                                {app.time}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-sm font-semibold text-slate-800">{app.patient}</h4>
+                                                                <p className="text-xs text-slate-500">{app.type}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <button 
+                                                                onClick={() => toggleStatus(app.id)}
+                                                                className={`text-xs px-2.5 py-1 rounded-full font-medium border cursor-pointer select-none transition-all ${
+                                                                    app.status === 'Confirmado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                                    app.status === 'Pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                                    'bg-rose-50 text-rose-700 border-rose-200'
+                                                                }`}
+                                                            >
+                                                                {app.status}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Atalhos Rápidos e Info */}
+                                        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
+                                            <div>
+                                                <h2 className="text-lg font-bold text-slate-900 mb-4">Ações Rápidas</h2>
+                                                <div className="space-y-3">
+                                                    <button onClick={() => setShowModal(true)} className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 p-3 rounded-lg text-left text-sm font-medium text-slate-700 flex items-center gap-3 transition-colors">
+                                                        <i className="fa-regular fa-calendar-plus text-emerald-600 text-base"></i>
+                                                        Agendar Novo Paciente
+                                                    </button>
+                                                    <button onClick={() => { setCurrentTab('patients'); }} className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 p-3 rounded-lg text-left text-sm font-medium text-slate-700 flex items-center gap-3 transition-colors">
+                                                        <i className="fa-solid fa-address-book text-blue-600 text-base"></i>
+                                                        Consultar Banco de Dados
+                                                    </button>
+                                                    <button className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 p-3 rounded-lg text-left text-sm font-medium text-slate-700 flex items-center gap-3 transition-colors">
+                                                        <i className="fa-solid fa-receipt text-purple-600 text-base"></i>
+                                                        Emitir Atestado / Receita
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 bg-emerald-950 text-emerald-100 p-4 rounded-xl relative overflow-hidden shadow-xs">
+                                                <div className="z-10 relative">
+                                                    <h4 className="font-bold text-sm text-white">GitHub Pages Pronto</h4>
+                                                    <p className="text-xs text-emerald-300 mt-1">Este projeto foi convertido com sucesso para um arquivo HTML estático unificado.</p>
+                                                </div>
+                                                <div className="absolute right-[-15px] bottom-[-15px] text-emerald-800 opacity-20 text-7xl font-bold">
+                                                    <i className="fa-brands fa-github"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB: APPOINTMENTS */}
+                            {currentTab === 'appointments' && (
+                                <div className="space-y-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div>
+                                            <h1 className="text-2xl font-bold text-slate-900">Gerenciador de Agendamentos</h1>
+                                            <p className="text-sm text-slate-500">Veja, altere status ou marque novas consultas.</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowModal(true)}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors self-start sm:self-auto flex items-center gap-2"
+                                        >
+                                            <i className="fa-solid fa-plus"></i> Novo Horário
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-semibold text-xs uppercase tracking-wider">
+                                                        <th className="p-4">Horário</th>
+                                                        <th className="p-4">Paciente</th>
+                                                        <th className="p-4">Tipo de Consulta</th>
+                                                        <th className="p-4">Contato</th>
+                                                        <th className="p-4">Status</th>
+                                                        <th className="p-4 text-right">Ação</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                                                    {filteredAppointments.map(app => (
+                                                        <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="p-4 font-bold text-slate-900">{app.time}</td>
+                                                            <td className="p-4 font-semibold text-slate-800">{app.patient}</td>
+                                                            <td className="p-4 text-slate-500">{app.type}</td>
+                                                            <td className="p-4 text-slate-500">{app.phone}</td>
+                                                            <td className="p-4">
+                                                                <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                                                                    app.status === 'Confirmado' ? 'bg-emerald-50 text-emerald-700' :
+                                                                    app.status === 'Pendente' ? 'bg-amber-50 text-amber-700' :
+                                                                    'bg-rose-50 text-rose-700'
+                                                                }`}>
+                                                                    {app.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 text-right">
+                                                                <button 
+                                                                    onClick={() => toggleStatus(app.id)}
+                                                                    className="text-slate-400 hover:text-emerald-600 p-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 rounded transition-colors"
+                                                                >
+                                                                    Alterar Status
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB: PATIENTS */}
+                            {currentTab === 'patients' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-slate-900">Banco de Dados de Pacientes</h1>
+                                        <p className="text-sm text-slate-500">Histórico simplificado de pacientes cadastrados na clínica.</p>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-semibold text-xs uppercase tracking-wider">
+                                                        <th className="p-4">ID</th>
+                                                        <th className="p-4">Nome Completo</th>
+                                                        <th className="p-4">Idade</th>
+                                                        <th className="p-4">Gênero</th>
+                                                        <th className="p-4">E-mail</th>
+                                                        <th className="p-4">Última Visita</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                                                    {filteredPatients.map(p => (
+                                                        <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="p-4 text-xs font-bold text-slate-400">{p.id}</td>
+                                                            <td className="p-4 font-semibold text-slate-900">{p.name}</td>
+                                                            <td className="p-4 text-slate-600">{p.age} anos</td>
+                                                            <td className="p-4 text-slate-500">{p.gender}</td>
+                                                            <td className="p-4 text-slate-500">{p.email}</td>
+                                                            <td className="p-4 text-slate-500">{p.lastVisit}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB: HISTORY (PRONTUÁRIOS) */}
+                            {currentTab === 'history' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-slate-900">Prontuários Médicos Eletrônicos</h1>
+                                        <p className="text-sm text-slate-500">Consulte ou insira observações e evoluções clínicas.</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs h-fit space-y-2">
+                                            <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">Selecionar Paciente</h3>
+                                            {patients.map(p => (
+                                                <div key={p.id} className="p-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-100 flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-800">{p.name}</p>
+                                                        <p className="text-xs text-slate-400">ID: {p.id}</p>
+                                                    </div>
+                                                    <i className="fa-solid fa-chevron-right text-xs text-slate-300"></i>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
+                                            <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+                                                <div>
+                                                    <h2 className="text-lg font-bold text-slate-900">Carlos Eduardo Santos</h2>
+                                                    <p className="text-xs text-slate-500">Masculino, 34 anos • Hipertenso controlado</p>
+                                                </div>
+                                                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">Última edicão: 12/05/2026</span>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Evolução Clínica Atual</label>
+                                                    <textarea 
+                                                        rows="4" 
+                                                        className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                                        defaultValue="Paciente compareceu para retorno relatando melhora significativa nos episódios de cefaleia após ajuste da medicação anti-hipertensiva. Sinais vitais estáveis: PA 120x80 mmHg. Mantida conduta terapêutica atual."
+                                                    ></textarea>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prescrição / Recomendações</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                                        defaultValue="Losartana Potássica 50mg - 1cp via oral em jejum."
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    <button className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-xs">
+                                                        Salvar Alterações
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                        </main>
+                    </div>
+
+                    {/* MODAL: NOVO AGENDAMENTO */}
+                    {showModal && (
+                        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+                            <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+                                <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                                    <h3 className="font-bold text-base">Novo Agendamento</h3>
+                                    <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white transition-colors cursor-pointer">
+                                        <i className="fa-solid fa-xmark text-lg"></i>
+                                    </button>
+                                </div>
+                                <form onSubmit={handleAddAppointment} className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Nome do Paciente</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            placeholder="Ex: Maria das Dores"
+                                            value={newPatientName}
+                                            onChange={(e) => setNewPatientName(e.target.value)}
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Horário</label>
+                                            <input 
+                                                type="time" 
+                                                required 
+                                                value={newTime}
+                                                onChange={(e) => setNewTime(e.target.value)}
+                                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Tipo</label>
+                                            <select 
+                                                value={newType}
+                                                onChange={(e) => setNewType(e.target.value)}
+                                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                            >
+                                                <option value="Consulta Geral">Consulta Geral</option>
+                                                <option value="Retorno">Retorno</option>
+                                                <option value="Exame Clínico">Exame Clínico</option>
+                                                <option value="Avaliação">Avaliação</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowModal(false)}
+                                            className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button 
+                                            type="submit"
+                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-xs"
+                                        >
+                                            Confirmar Horário
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ClinicCompanion />);
+    </script>
+</body>
+</html>
